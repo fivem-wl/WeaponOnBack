@@ -63,7 +63,7 @@ public class WeaponOnBack : PumaScript
     static Entity _latestWeaponObjectOnBack;
     static Weapon _latestWeaponOnBack;
     
-    static readonly List<WeaponGroup> WeaponGroupsBlacklist = new List<WeaponGroup>
+    static readonly List<WeaponGroup> WeaponGroupBlacklist = new List<WeaponGroup>
     {
         WeaponGroup.Unarmed,
         WeaponGroup.Parachute,
@@ -73,9 +73,9 @@ public class WeaponOnBack : PumaScript
         WeaponGroup.DigiScanner,
     };
     
-    static readonly List<WeaponHash> WeaponsBlacklist = new List<WeaponHash>
+    static readonly List<WeaponHash> WeaponBlacklist = new List<WeaponHash>
     {
-        WeaponHash.GolfClub,
+        WeaponHash.Unarmed,
     };
     
     static readonly List<WeaponAttachDetail> WeaponsAttachDetails = new List<WeaponAttachDetail>
@@ -275,8 +275,8 @@ public class WeaponOnBack : PumaScript
         
         var isWeaponNeedToDisplay =
             weaponNeedToCreate.Model.IsValid && weaponNeedToCreate.Model.IsInCdImage &&
-            !WeaponGroupsBlacklist.Contains(weaponNeedToCreate.Group) &&
-            !WeaponsBlacklist.Contains(weaponNeedToCreate.Hash);
+            !WeaponGroupBlacklist.Contains(weaponNeedToCreate.Group) &&
+            !WeaponBlacklist.Contains(weaponNeedToCreate.Hash);
         if (!isWeaponNeedToDisplay) return;
         
         var weaponObject = await CreateWeaponObject(weaponNeedToCreate);
