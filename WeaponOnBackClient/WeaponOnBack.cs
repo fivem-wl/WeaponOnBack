@@ -134,6 +134,22 @@ public class WeaponOnBack : PumaScript
 				        Debug.WriteLine($"[{ResourceName}]{GameModeName}:{ResourceName}:CommandSucceed: {raw}");
 				        TriggerEvent($"{GameModeName}:{ResourceName}:CommandSucceed", raw);
 				        break;
+//			        case "reg":
+//				        // Sync
+//				        var handle = weaponObject.Handle;
+//				        
+//				        if (API.NetworkGetEntityIsNetworked(weaponObject.Handle))
+//				        {
+//					        Debug.WriteLine($"not networked {weaponObject.Handle}");
+//				        }
+//				        weaponObject.IsPersistent = true;
+//				        var netId = API.NetworkGetNetworkIdFromEntity(handle);
+//				        API.NetworkRegisterEntityAsNetworked(API.ObjToNet(handle));
+//				        API.SetNetworkIdCanMigrate(netId, true);
+//				        API.SetNetworkIdExistsOnAllMachines(netId, true);
+//				        API.NetworkRequestControlOfEntity(handle);
+//				        Debug.WriteLine($"try set prop as networked {weaponObject.Handle}");
+//				        break;
 			        default:
 				        Debug.WriteLine($"[{ResourceName}]{GameModeName}:{ResourceName}:CommandFailed: {raw}");
 				        TriggerEvent($"{GameModeName}:{ResourceName}:CommandFailed", raw);
@@ -326,6 +342,14 @@ public class WeaponOnBack : PumaScript
         var propHandle = API.CreateWeaponObject((uint)weapon.Hash, 1, pos.X, pos.Y, pos.Z, true, 0f, 0);
         var prop = Entity.FromHandle(propHandle);
         if (prop is null) return null;
+        
+        // Try sync
+        API.NetworkRegisterEntityAsNetworked(API.ObjToNet(propHandle));
+        prop.IsPersistent = true;
+        var netId = API.NetworkGetNetworkIdFromEntity(propHandle);
+        API.SetNetworkIdCanMigrate(netId, true);
+        API.SetNetworkIdExistsOnAllMachines(netId, true);
+        API.NetworkRequestControlOfEntity(propHandle);
         
         // Set tint
         var weaponTintIndex = (int)weapon.Tint;
