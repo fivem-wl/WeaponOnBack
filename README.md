@@ -21,3 +21,6 @@
 3. Weapon object not sync well through client (working on it)
 4. Weapon object only synced in OneSync server, I'm working on it, but might not be fixed :(
 5. If you find more issues, feel free to post it.
+#### Donation
+ - If you like this script, please consider buy me a coffee XD.
+ - [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=G6FWBPUJ5HZKY&item_name=BuyCoffeeXD&currency_code=USD) 
