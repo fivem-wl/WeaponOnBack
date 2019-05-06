@@ -100,6 +100,7 @@ public class WeaponOnBack : PumaScript
 	    _previousWeaponInHand = Game.PlayerPed.Weapons[WeaponHash.Unarmed];
 	    
         Tick += UpdateWeaponsOnBackAsync;
+        Tick += LoadWeaponAsset;
         
         API.RegisterCommand("wob", new Action<int, List<object>, string>((source, args, raw) =>
         {
@@ -292,6 +293,24 @@ public class WeaponOnBack : PumaScript
 
         _latestWeaponObjectOnBack = weaponObject;
         _latestWeaponOnBack = weaponNeedToCreate;
+    }
+
+    static async Task LoadWeaponAsset()
+    {
+	    //var weaponHashes = Enum.GetValues(typeof(WeaponHash)).Cast<uint>();
+	    var weaponHashes = WeaponInfo.WeaponNames.Keys.Select(k => (uint)API.GetHashKey(k)).ToList();
+	    weaponHashes.ForEach(async weaponHash =>
+	    {
+		    if (API.HasWeaponAssetLoaded(weaponHash)) return;
+		    API.RequestWeaponAsset(weaponHash, 31, 0);
+		    while (API.HasWeaponAssetLoaded(weaponHash))
+		    {
+			    await Delay(1000);
+		    }
+		    Debug.WriteLine($"[{ResourceName}]Load weapon model {(WeaponHash)weaponHash} {weaponHash}");
+	    });
+		
+	    await Delay(1000 * 60 * 5);
     }
     
     static async Task<Entity> CreateWeaponObject(Weapon weapon)
