@@ -244,9 +244,10 @@ public class WeaponOnBack : PumaScript
 
         public static void DeleteAllWeaponObjects()
         {
-            var allWeaponObjects = GetAllDisplayedWeaponObjects();
-            allWeaponObjects.Values.ForEach(wo => wo?.Delete());
-            allWeaponObjects.Keys.ForEach(k => allWeaponObjects[k] = null);
+	        var allWeaponObjects = GetAllDisplayedWeaponObjects();
+	        var keys = allWeaponObjects.Keys.ToList();
+	        allWeaponObjects.Values.ForEach(wo => wo?.Delete());
+	        keys.ForEach(k => allWeaponObjects[k] = null);
         }
     }
 
