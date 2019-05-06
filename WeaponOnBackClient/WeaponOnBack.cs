@@ -38,7 +38,8 @@ namespace WeaponOnBackClient
 
 public class WeaponOnBack : PumaScript
 {
-    const string ResourceName = "WeaponOnBack";
+	public const string GameModeName = "FuturePlanFreeRoam";
+    public const string ResourceName = "WeaponOnBack";
     
     readonly struct WeaponAttachDetail
     {
@@ -59,6 +60,8 @@ public class WeaponOnBack : PumaScript
     class WeaponDisplayGroup : List<WeaponGroup> {}
     
     static Weapon _previousWeaponInHand;
+    static Entity _latestWeaponObjectOnBack;
+    static Weapon _latestWeaponOnBack;
     
     static readonly List<WeaponGroup> WeaponGroupsBlacklist = new List<WeaponGroup>
     {
@@ -97,6 +100,55 @@ public class WeaponOnBack : PumaScript
 	    _previousWeaponInHand = Game.PlayerPed.Weapons[WeaponHash.Unarmed];
 	    
         Tick += UpdateWeaponsOnBackAsync;
+        
+        API.RegisterCommand("wob", new Action<int, List<object>, string>((source, args, raw) =>
+        {
+	        try
+	        {
+		        var commandArg1 = args[0].ToString().ToLower();
+		        var weapon = _latestWeaponOnBack;
+		        var weaponObject = _latestWeaponObjectOnBack;
+
+		        switch (commandArg1)
+		        {
+			        case "pos":
+			        case "position":
+				        var position = new Vector3(
+					        float.Parse(args[1].ToString()) / 100,
+					        float.Parse(args[2].ToString()) / 100,
+					        float.Parse(args[3].ToString()) / 100);
+				        WeaponOffset.Set(weapon.Hash, WeaponOffset.OffsetType.Position, position);
+				        AttachWeapon(weapon, weaponObject);
+				        Debug.WriteLine($"[{ResourceName}]{GameModeName}:{ResourceName}:CommandSucceed: {raw}");
+				        TriggerEvent($"{GameModeName}:{ResourceName}:CommandSucceed", raw);
+				        break;
+			        case "rot":
+			        case "rotation":
+				        var rotation = new Vector3(
+					        float.Parse(args[1].ToString()),
+					        float.Parse(args[2].ToString()),
+					        float.Parse(args[3].ToString()));
+				        WeaponOffset.Set(weapon.Hash, WeaponOffset.OffsetType.Rotation, rotation);
+				        AttachWeapon(weapon, weaponObject);
+				        Debug.WriteLine($"[{ResourceName}]{GameModeName}:{ResourceName}:CommandSucceed: {raw}");
+				        TriggerEvent($"{GameModeName}:{ResourceName}:CommandSucceed", raw);
+				        break;
+			        default:
+				        Debug.WriteLine($"[{ResourceName}]{GameModeName}:{ResourceName}:CommandFailed: {raw}");
+				        TriggerEvent($"{GameModeName}:{ResourceName}:CommandFailed", raw);
+				        break;
+		        }
+	        }
+	        catch (Exception e)
+	        {
+		        Debug.WriteLine($"[{ResourceName}][ERROR]{e.Message}");
+		        // Debug.WriteLine($"[{ResourceName}]Usage: /wob pos [posX] [posY] [posZ]");
+		        // Debug.WriteLine($"[{ResourceName}]Usage: /wob rot [rotX] [rotY] [rotZ]");
+		        Debug.WriteLine($"[{ResourceName}]{GameModeName}:{ResourceName}:CommandFailed: {raw}");
+		        TriggerEvent($"{GameModeName}:{ResourceName}:CommandFailed", raw);
+	        }
+	        
+        }), false);
         
         #if DEBUG
         
@@ -234,12 +286,12 @@ public class WeaponOnBack : PumaScript
             return;
         }
 
-        var info = WeaponsAttachDetails.Single(wad => wad.WeaponGroup == weaponNeedToCreate.Group);
-        weaponObject.AttachTo(Game.PlayerPed.Bones[info.Bone], info.Position, info.Rotation);
-        Debug.WriteLine($"[{ResourceName}]Attach {weaponNeedToCreate.Hash}({weaponNeedToCreate.Group}) to {info.Bone}, {info.Position}, {info.Rotation}");
-
+        AttachWeapon(weaponNeedToCreate, weaponObject);
+		
         WeaponDisplay.SetWeaponObject(WeaponDisplay.GetWeaponDisplayGroup(weaponNeedToCreate), weaponObject);
 
+        _latestWeaponObjectOnBack = weaponObject;
+        _latestWeaponOnBack = weaponNeedToCreate;
     }
     
     static async Task<Entity> CreateWeaponObject(Weapon weapon)
@@ -270,6 +322,24 @@ public class WeaponOnBack : PumaScript
         }
 
         return prop;
+    }
+
+    static void AttachWeapon(Weapon weapon, Entity weaponObject)
+    {
+	    var weaponGroup = weapon.Group;
+	    var info = WeaponsAttachDetails.Single(wad => wad.WeaponGroup == weaponGroup);
+	    var positionOffset = WeaponOffset.Get(weapon.Hash, WeaponOffset.OffsetType.Position);
+	    var rotationOffset = WeaponOffset.Get(weapon.Hash, WeaponOffset.OffsetType.Rotation);
+	    var position = new Vector3(
+		    info.Position.X + positionOffset.X,
+		    info.Position.Y + positionOffset.Y,
+		    info.Position.Z + positionOffset.Z);
+	    var rotation = new Vector3(
+		    info.Rotation.X + rotationOffset.X,
+		    info.Rotation.Y + rotationOffset.Y,
+		    info.Rotation.Z + rotationOffset.Z);
+	    weaponObject.AttachTo(Game.PlayerPed.Bones[info.Bone], position, rotation);
+	    Debug.WriteLine($"[{ResourceName}]Attach {weapon.Hash}({weapon.Group}) to {info.Bone}, {position}, {rotation}");
     }
     
     /*

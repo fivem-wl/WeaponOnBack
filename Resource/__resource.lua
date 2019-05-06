@@ -20,9 +20,11 @@ along with FuturePlanFreeRoam.  If not, see <https://www.gnu.org/licenses/>.
 resource_manifest_version "44febabe-d386-4d18-afbe-5e627f4af937"
 
 files {
+    "System.ValueTuple.dll",
+    "System.Numerics.dll",
+    "Newtonsoft.Json.dll",
     'PumaCore.dll',
     'PumaClient.dll',
-    "System.ValueTuple.dll",
 }
 
 client_scripts {
