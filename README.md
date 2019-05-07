@@ -23,4 +23,4 @@
 5. If you find more issues, feel free to post it.
 #### Donation
  - If you like this script, please consider buy me a coffee XD.
- - [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JK2B5J8XTQME2&item_name=BuyCoffeeXD&currency_code=USD) 
+ - [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JK2B5J8XTQME2&item_name=BuyCoffeeXD&currency_code=USD&amount=1.99) 
