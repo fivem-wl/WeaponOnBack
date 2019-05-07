@@ -101,6 +101,7 @@ public class WeaponOnBack : PumaScript
 	    
         Tick += UpdateWeaponsOnBackAsync;
         Tick += LoadWeaponAsset;
+        Tick += ReAttachWeapons;
         
         API.RegisterCommand("wob", new Action<int, List<object>, string>((source, args, raw) =>
         {
@@ -239,6 +240,11 @@ public class WeaponOnBack : PumaScript
             DisplayGroupsWeapon[equipGroup] = weapon;
         }
 
+        public static void SetWeapon(WeaponDisplayGroup displayGroup, Weapon weapon)
+        {
+	        DisplayGroupsWeapon[displayGroup] = weapon;
+        }
+
         public static Weapon GetWeapon(WeaponDisplayGroup displayGroup)
         {
             DisplayGroupsWeapon.TryGetValue(displayGroup, out var weapon);
@@ -267,6 +273,32 @@ public class WeaponOnBack : PumaScript
         }
     }
 
+    static async Task ReAttachWeapons()
+    {
+	    WeaponDisplay.GetAllDisplayedWeaponObjects()
+		    .Where(d => !(d.Value is null) && d.Value.Exists())
+		    .ToList()
+		    .ForEach(d =>
+		    {
+			    var weaponDisplayGroup = d.Key;
+			    var weaponObject = d.Value;
+			    var weapon = WeaponDisplay.GetWeapon(weaponDisplayGroup);
+			    	    
+			    // Try sync
+			    API.NetworkRegisterEntityAsNetworked(API.ObjToNet(weaponObject.Handle));
+			    weaponObject.IsPersistent = true;
+			    var netId = API.NetworkGetNetworkIdFromEntity(weaponObject.Handle);
+			    API.SetNetworkIdCanMigrate(netId, true);
+			    API.SetNetworkIdExistsOnAllMachines(netId, true);
+			    API.NetworkRequestControlOfEntity(weaponObject.Handle);
+
+			    AttachWeapon(weapon, weaponObject);
+			    Debug.WriteLine($"[{ResourceName}]ReAttachWeapon: weapon: {weapon.Hash}, model: {weaponObject.Model.Hash}, handle: {weaponObject.Handle}");
+		    });
+
+	    await Delay(1000 * 10);
+    }
+    
     static async Task UpdateWeaponsOnBackAsync()
     {
         await Delay(100);
@@ -306,6 +338,7 @@ public class WeaponOnBack : PumaScript
 
         AttachWeapon(weaponNeedToCreate, weaponObject);
 		
+        WeaponDisplay.SetWeapon(WeaponDisplay.GetWeaponDisplayGroup(weaponNeedToCreate), weaponNeedToCreate);
         WeaponDisplay.SetWeaponObject(WeaponDisplay.GetWeaponDisplayGroup(weaponNeedToCreate), weaponObject);
 
         _latestWeaponObjectOnBack = weaponObject;
