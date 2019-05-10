@@ -15,31 +15,27 @@
  * along with FuturePlanFreeRoam.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
 using CitizenFX.Core;
-using CitizenFX.Core.Native;
+
+using PumaFramework.Server.Event;
 
 
-namespace WeaponOnBackClient
+namespace WeaponOnBackServer.Event
 {
 
-static class PlayerExtensions
+public class PlayerWeaponAttachedEvent : PlayerEvent
 {
-	/// <summary>
-	/// Get all equipped weapon of <seealso cref="Ped"/>
-	/// </summary>
-	/// <param name="ped"></param>
-	/// <returns></returns>
-	internal static List<Weapon> GetAllWeapons(this Ped ped)
+	public readonly uint WeaponHash;
+	public readonly uint BoneId;
+	public readonly Vector3 Position;
+	public readonly Vector3 Rotation;
+
+	public PlayerWeaponAttachedEvent(Player source, uint weaponHash, uint boneId, Vector3 position, Vector3 rotation) : base(source)
 	{
-		List<Weapon> weaponList = new List<Weapon>();
-		var weapons = ped.Weapons;
-		foreach (var weaponName in WeaponInfo.WeaponNames.Keys)
-		{
-			if (!API.HasPedGotWeapon(ped.Handle, (uint) API.GetHashKey(weaponName), false)) continue;
-			weaponList.Add(weapons[(WeaponHash)API.GetHashKey(weaponName)]);
-		}
-		return weaponList;
+		WeaponHash = weaponHash;
+		BoneId = boneId;
+		Position = position;
+		Rotation = rotation;
 	}
 }
 

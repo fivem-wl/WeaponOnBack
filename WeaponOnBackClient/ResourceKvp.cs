@@ -26,7 +26,7 @@ using CitizenFX.Core.Native;
 namespace WeaponOnBackClient
 {
 
-internal static class ResourceKvp
+public static class ResourceKvp
 {
 	
 	const int NotFoundHandle = -1;

@@ -15,31 +15,31 @@
  * along with FuturePlanFreeRoam.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Collections.Generic;
-using CitizenFX.Core;
-using CitizenFX.Core.Native;
 
-
-namespace WeaponOnBackClient
+namespace WeaponOnBackShared
 {
 
-static class PlayerExtensions
+public static class DictExtensions
 {
-	/// <summary>
-	/// Get all equipped weapon of <seealso cref="Ped"/>
-	/// </summary>
-	/// <param name="ped"></param>
-	/// <returns></returns>
-	internal static List<Weapon> GetAllWeapons(this Ped ped)
+	public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue = default)
 	{
-		List<Weapon> weaponList = new List<Weapon>();
-		var weapons = ped.Weapons;
-		foreach (var weaponName in WeaponInfo.WeaponNames.Keys)
-		{
-			if (!API.HasPedGotWeapon(ped.Handle, (uint) API.GetHashKey(weaponName), false)) continue;
-			weaponList.Add(weapons[(WeaponHash)API.GetHashKey(weaponName)]);
-		}
-		return weaponList;
+		if (dictionary == null)
+			throw new ArgumentNullException(nameof(dictionary));
+
+		if (key == null)
+			throw new ArgumentNullException(nameof(key));
+
+		return dictionary.TryGetValue(key, out var value) ? value : defaultValue;
+	}
+	
+	public static TValue GetOrCreate<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key) where TValue : new()
+	{
+		if (dict.TryGetValue(key, out var val)) return val;
+		val = new TValue();
+		dict.Add(key, val);
+		return val;
 	}
 }
 

@@ -17,30 +17,28 @@
 
 using System.Collections.Generic;
 using CitizenFX.Core;
-using CitizenFX.Core.Native;
-
 
 namespace WeaponOnBackClient
 {
 
-static class PlayerExtensions
+static class Blacklist
 {
-	/// <summary>
-	/// Get all equipped weapon of <seealso cref="Ped"/>
-	/// </summary>
-	/// <param name="ped"></param>
-	/// <returns></returns>
-	internal static List<Weapon> GetAllWeapons(this Ped ped)
+	public static readonly List<WeaponGroup> WeaponGroup = new List<WeaponGroup>
 	{
-		List<Weapon> weaponList = new List<Weapon>();
-		var weapons = ped.Weapons;
-		foreach (var weaponName in WeaponInfo.WeaponNames.Keys)
-		{
-			if (!API.HasPedGotWeapon(ped.Handle, (uint) API.GetHashKey(weaponName), false)) continue;
-			weaponList.Add(weapons[(WeaponHash)API.GetHashKey(weaponName)]);
-		}
-		return weaponList;
-	}
+		CitizenFX.Core.WeaponGroup.Unarmed,
+		CitizenFX.Core.WeaponGroup.Parachute,
+		CitizenFX.Core.WeaponGroup.PetrolCan,
+		CitizenFX.Core.WeaponGroup.NightVision,
+		CitizenFX.Core.WeaponGroup.FireExtinguisher,
+		CitizenFX.Core.WeaponGroup.DigiScanner,
+	};
+	
+	public static readonly List<WeaponHash> WeaponHash = new List<WeaponHash>
+	{
+		CitizenFX.Core.WeaponHash.Unarmed,
+	};
 }
+
+
 
 }

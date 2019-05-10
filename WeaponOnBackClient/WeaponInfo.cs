@@ -316,6 +316,9 @@ public static class WeaponInfo
         { "weapon_stone_hatchet", API.GetLabelText("WT_SHATCHET") }
     };
 
+    public static List<WeaponHash> GetWeaponHashes()
+	    => WeaponNames.Keys.Select(wn => (WeaponHash) (uint) API.GetHashKey(wn)).ToList();
+    
 }
 
 

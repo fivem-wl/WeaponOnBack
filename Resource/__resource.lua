@@ -32,5 +32,5 @@ client_scripts {
 }
 
 server_scripts {
-    
+    "WeaponOnBackServer.net.dll"
 }

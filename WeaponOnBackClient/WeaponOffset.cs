@@ -23,14 +23,22 @@ using Newtonsoft.Json;
 
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
+using PumaFramework.Shared;
+
+using WeaponOnBackShared;
 
 
 namespace WeaponOnBackClient
 {
 
-static class WeaponOffset
+abstract class WeaponOffset
 {
+
+	Player _player;
 	
+	protected const string GameModeName = "FuturePlanFreeRoam";
+	protected const string ResourceName = "WeaponOnBack";
+
 	public enum OffsetType
 	{
 		Position = 1,
@@ -38,26 +46,18 @@ static class WeaponOffset
 	}
 	const float MaxPositionOffset = 0.20f;
 	const float MaxRotationOffset = 360f;
-	static string GameModeName => WeaponOnBack.GameModeName;
-	static string ResourceName => WeaponOnBack.ResourceName;
 
-	public static Vector3 Get(WeaponHash weaponHash, OffsetType offsetType)
+	protected WeaponOffset(Player player)
 	{
-		var key = GetKey(weaponHash, offsetType);
-		var value = ResourceKvp.Get<string>(key);
-		Debug.WriteLine($"[{ResourceName}][WeaponOffset]Get - key: {key} - value: {value}");
-		return string.IsNullOrEmpty(value) ? Vector3.Zero : JsonConvert.DeserializeObject<Vector3>(value);
+		_player = player;
 	}
+
+	public abstract bool TryGet(WeaponHash weaponHash, OffsetType offsetType, out Vector3 vector3);
+	public abstract Vector3 Get(WeaponHash weaponHash, OffsetType offsetType);
+	public abstract void Set(WeaponHash weaponHash, OffsetType offsetType, Vector3 vector3);
+
+	protected static void TriggerServerEvent(string eventName, params object[] args) => BaseScript.TriggerServerEvent(eventName, args);
 	
-	public static void Set(WeaponHash weaponHash, OffsetType offsetType, Vector3 vector3)
-	{
-		var key = GetKey(weaponHash, offsetType);
-		var rawValue = Polish(vector3, offsetType);
-		var value = JsonConvert.SerializeObject(Polish(vector3, offsetType));
-		Debug.WriteLine($"[{ResourceName}][WeaponOffset]Set - key: {key} - value: {value} - rawValue: {rawValue}");
-		ResourceKvp.Set(key, value);
-	}
-
 	/// <summary>
 	/// Edit vector3 value to a specific range, base on offset type.
 	/// </summary>
@@ -65,7 +65,7 @@ static class WeaponOffset
 	/// <param name="offsetType"></param>
 	/// <returns></returns>
 	/// <exception cref="ArgumentException"></exception>
-	static Vector3 Polish(Vector3 vector3, OffsetType offsetType)
+	protected static Vector3 Polish(Vector3 vector3, OffsetType offsetType)
 	{
 
 //		if (vector3.IsZero) return Vector3.Zero;
@@ -85,10 +85,102 @@ static class WeaponOffset
 				throw new ArgumentException();
 		}
 	}
+}
 
-	static string GetKey(WeaponHash weaponHash, OffsetType offsetType)
+sealed class ThisPlayerWeaponOffset : WeaponOffset
+{
+	public ThisPlayerWeaponOffset() : base(Game.Player)
+	{
+		
+	}
+	public override bool TryGet(WeaponHash weaponHash, OffsetType offsetType, out Vector3 vector3)
+	{
+		var key = GetKey(weaponHash, offsetType);
+		var value = ResourceKvp.Get<string>(key);
+		Debug.WriteLine($"[{ResourceName}][WeaponOffset]TryGet - key: {key} - value: {value}");
+		if (string.IsNullOrEmpty(value))
+		{
+			vector3 = default;
+			return false;
+		}
+		vector3 = JsonConvert.DeserializeObject<Vector3>(value);
+		return true;
+	}
+
+	public override Vector3 Get(WeaponHash weaponHash, OffsetType offsetType)
+	{
+		var key = GetKey(weaponHash, offsetType);
+		var value = ResourceKvp.Get<string>(key);
+		return string.IsNullOrEmpty(value) ? Vector3.Zero : JsonConvert.DeserializeObject<Vector3>(value);
+	}
+
+	public override void Set(WeaponHash weaponHash, OffsetType offsetType, Vector3 vector3)
+	{
+		var key = GetKey(weaponHash, offsetType);
+		var rawValue = Polish(vector3, offsetType);
+		var value = JsonConvert.SerializeObject(Polish(vector3, offsetType));
+		ResourceKvp.Set(key, value);
+		
+		TriggerServerEvent(
+			$"{GameModeName}_{ResourceName}_PlayerWeaponOffsetSetEvent", 
+			(uint) weaponHash, Get(weaponHash, OffsetType.Position), Get(weaponHash, OffsetType.Rotation));
+		Debug.WriteLine($"[{ResourceName}][WeaponOffset]Set - key: {key} - value: {value} - rawValue: {rawValue}");
+	}
+
+	string GetKey(WeaponHash weaponHash, OffsetType offsetType)
 		=> $"{GameModeName}:{ResourceName}:{weaponHash}:{offsetType.ToString()}";
 
+}
+
+sealed class GeneralPlayerWeaponOffset : WeaponOffset
+{
+	readonly Dictionary<WeaponHash, Vector3> _weaponsPosition;
+	readonly Dictionary<WeaponHash, Vector3> _weaponsRotation;
+	
+	public GeneralPlayerWeaponOffset(Player player) : base(player)
+	{
+		_weaponsPosition = new Dictionary<WeaponHash, Vector3>();
+		_weaponsRotation = new Dictionary<WeaponHash, Vector3>();
+	}
+
+	/// <summary>
+	/// Not implemented
+	/// </summary>
+	/// <param name="weaponHash"></param>
+	/// <param name="offsetType"></param>
+	/// <param name="vector3"></param>
+	/// <returns></returns>
+	public override bool TryGet(WeaponHash weaponHash, OffsetType offsetType, out Vector3 vector3)
+	{
+		vector3 = default;
+		return false;
+	}
+
+	public override Vector3 Get(WeaponHash weaponHash, OffsetType offsetType)
+	{
+		switch (offsetType)
+		{
+			case OffsetType.Position: 
+				return _weaponsPosition.GetValueOrDefault(weaponHash);
+            case OffsetType.Rotation: 
+	            return _weaponsRotation.GetValueOrDefault(weaponHash);
+            default: throw new ArgumentException();
+		}
+	}
+
+	public override void Set(WeaponHash weaponHash, OffsetType offsetType, Vector3 vector3)
+	{
+		switch (offsetType)
+		{
+			case OffsetType.Position: 
+				_weaponsPosition[weaponHash] = Polish(vector3, OffsetType.Position);
+				break;
+			case OffsetType.Rotation:
+				_weaponsRotation[weaponHash] = Polish(vector3, OffsetType.Rotation);
+				break;
+			default: throw new ArgumentException();
+		}
+	}
 }
 
 }

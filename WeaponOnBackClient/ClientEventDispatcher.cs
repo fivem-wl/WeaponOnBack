@@ -15,31 +15,34 @@
  * along with FuturePlanFreeRoam.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
+using System;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
-
+using PumaFramework.Core.Event;
+using WeaponOnBackClient.Event;
 
 namespace WeaponOnBackClient
 {
 
-static class PlayerExtensions
+public class ClientEventDispatcher
 {
-	/// <summary>
-	/// Get all equipped weapon of <seealso cref="Ped"/>
-	/// </summary>
-	/// <param name="ped"></param>
-	/// <returns></returns>
-	internal static List<Weapon> GetAllWeapons(this Ped ped)
+	const string GameModeName = "FuturePlanFreeRoam";
+	const string ResourceName = "WeaponOnBack";
+	
+	readonly EventManager _eventManager;
+
+	public ClientEventDispatcher(EventManager eventManager)
 	{
-		List<Weapon> weaponList = new List<Weapon>();
-		var weapons = ped.Weapons;
-		foreach (var weaponName in WeaponInfo.WeaponNames.Keys)
-		{
-			if (!API.HasPedGotWeapon(ped.Handle, (uint) API.GetHashKey(weaponName), false)) continue;
-			weaponList.Add(weapons[(WeaponHash)API.GetHashKey(weaponName)]);
-		}
-		return weaponList;
+		_eventManager = eventManager;
+	}
+
+	[EventHandler(GameModeName + "_" + ResourceName + "_" + "PlayerWeaponAttachEvent")]
+	void OnPlayerWeaponAttached(int playerServerId , uint weaponHash, uint boneId, Vector3 position,
+		Vector3 rotation)
+	{
+		var player = new Player(API.GetPlayerFromServerId(playerServerId));
+		_eventManager.DispatchEvent(new PlayerWeaponAttachEvent(player, (WeaponHash) weaponHash, (Bone) boneId,
+			position, rotation));
 	}
 }
 
