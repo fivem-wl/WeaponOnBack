@@ -1,3 +1,5 @@
+# This repo is archived in favor of [weapon-on-back](https://github.com/fivem-wl/future-world/tree/master/projects/weapon-on-back),
+
 ### WeaponOnBack
 #### Builds
 |Latest Build|
